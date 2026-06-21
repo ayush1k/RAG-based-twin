@@ -7,9 +7,9 @@ This file documents the current state, architecture decisions, and next steps of
 ## 1. Project Overview
 A production-grade, portfolio RAG chatbot that acts as **Ayush Kumar's digital twin**.
 
-- **Retrieval**: Dense embeddings via `sentence-transformers/all-MiniLM-L6-v2` + FAISS vectorstore.
+- **Retrieval**: Hosted dense embeddings via `sentence-transformers/all-MiniLM-L6-v2` via Hugging Face Inference API + FAISS vectorstore.
 - **Generation**: `Qwen/Qwen2.5-7B-Instruct` via Hugging Face Serverless API.
-- **Framework**: LangChain + FastAPI.
+- **Framework**: LangChain (LCEL) + FastAPI + Streamlit.
 
 ---
 
@@ -17,17 +17,20 @@ A production-grade, portfolio RAG chatbot that acts as **Ayush Kumar's digital t
 
 ```text
 RAG-based-twin/
+├── .streamlit/
+│   └── config.toml      # Silences deep library watcher warnings (like torchvision)
 ├── .env                # HF_ACCESS_TOKEN and other secrets (never commit)
 ├── .gitignore
 ├── LICENSE
-├── README.md
+├── README.md           # Quickstart and usage manual
 ├── antigravity.md      # This file — project state tracker
 ├── requirements.txt    # All Python dependencies
 │
-├── ingest.py           # Step 1 — Build the vectorstore from data/
-├── retriever.py        # Step 2 — Load vectorstore & retrieve context chunks
-├── llm_engine.py       # Step 3 — Prompt Qwen & return grounded answers
+├── ingest.py           # Step 1 — Build the vectorstore from data/ via HF Endpoint API
+├── retriever.py        # Step 2 — Load vectorstore & retrieve context chunks via HF Endpoint API
+├── llm_engine.py       # Step 3 — Prompt Qwen via LCEL chains and return grounded answers
 ├── main.py             # Step 4 — FastAPI app (POST /chat, GET /health)
+├── dashboard.py        # Step 5 — Streamlit interactive testing UI
 ├── rag.py              # Legacy smoke-test (single-query script, kept for reference)
 │
 ├── data/               # Place your portfolio .md files here (source of truth)
@@ -39,24 +42,24 @@ RAG-based-twin/
 ## 3. Architecture Diagram
 
 ```
-User Query (HTTP POST /chat)
+User Query (HTTP POST /chat OR Streamlit UI)
          │
          ▼
-    [ main.py ]
+[ main.py / dashboard.py ]
          │
          ├──► [ retriever.py ]
          │         │
          │         ├── Load FAISS index from vectorstore/ (once, cached)
-         │         ├── Embed query with all-MiniLM-L6-v2
-         │         └── Return top-k chunks as context string
+         │         ├── Embed query with all-MiniLM-L6-v2 via HF API
+         │         └── Return top-k chunks as context string (using MMR search)
          │
          └──► [ llm_engine.py ]
                    │
-                   ├── Inject System Prompt (digital twin persona)
-                   ├── Inject retrieved context + user query
-                   └── Call Qwen/Qwen2.5-7B-Instruct via HF Serverless
-                              │
-                              └── Return grounded answer → HTTP Response
+                   ├── Load RAG_PROMPT (ChatPromptTemplate)
+                   ├── Chain execution (RAG_PROMPT | model | StrOutputParser)
+                   └── Call Qwen/Qwen2.5-7B-Instruct via HF Serverless API
+                               │
+                               └── Return grounded first-person answer
 ```
 
 ---
@@ -65,30 +68,32 @@ User Query (HTTP POST /chat)
 
 | File | Role | Key Components |
 |---|---|---|
-| `ingest.py` | Data pipeline — run once | `DirectoryLoader`, `RecursiveCharacterTextSplitter`, `HuggingFaceEmbeddings`, `FAISS` |
-| `retriever.py` | Search engine — loads & queries FAISS | `FAISS.load_local`, `similarity_search`, module-level singleton |
-| `llm_engine.py` | LLM generation layer | `ChatHuggingFace`, `SystemMessage`, `HumanMessage`, strict system prompt |
+| `ingest.py` | Data pipeline — run once | `DirectoryLoader`, `RecursiveCharacterTextSplitter`, `HuggingFaceEndpointEmbeddings`, `FAISS` |
+| `retriever.py` | Search engine — loads & queries FAISS | `FAISS.load_local`, `max_marginal_relevance_search`, `HuggingFaceEndpointEmbeddings` |
+| `llm_engine.py` | LLM generation layer | `ChatHuggingFace`, `ChatPromptTemplate`, `StrOutputParser`, LCEL pipe operator (`\|`) |
 | `main.py` | FastAPI REST API | `POST /chat`, `GET /health`, Pydantic models, CORS |
-| `requirements.txt` | Python dependencies | `langchain`, `faiss-cpu`, `sentence-transformers`, `fastapi`, etc. |
+| `dashboard.py` | Streamlit Dashboard | Visual query tester, source document viewer, RAG parameter controller |
+| `.streamlit/config.toml` | Streamlit configurations | Disables `fileWatcherType` to suppress warnings on optional PyTorch/Transformers submodules |
+| `requirements.txt` | Python dependencies | `langchain`, `faiss-cpu`, `langchain-huggingface`, `fastapi`, `streamlit`, etc. |
 
 ---
 
 ## 5. Key Decisions & Rationale
 
+### Why `HuggingFaceEndpointEmbeddings` over `HuggingFaceEmbeddings`?
+Using `HuggingFaceEndpointEmbeddings` connects directly to the Hugging Face Serverless Inference API. This keeps the application extremely lightweight since it does not have to download and cache model weights locally (saving ~80-100MB of storage/RAM) and runs embedding generation rapidly in the cloud.
+
 ### Why `ChatHuggingFace` over `HuggingFaceEndpoint` directly?
-The HF Serverless API routes modern instruction models (Qwen, Llama-3, Gemma-2) through third-party providers (Together AI, Novita, Featherless-AI). These providers **only** support the `conversational` (chat completions) task — not `text-generation`. `HuggingFaceEndpoint` calls `text_generation()` internally and therefore always fails. `ChatHuggingFace` calls `chat_completion()` which is the correct path.
+The HF Serverless API routes modern instruction models (Qwen, Llama-3, Gemma-2) through third-party providers. These providers **only** support the `conversational` (chat completions) task — not `text-generation`. `HuggingFaceEndpoint` calls `text_generation()` internally and therefore always fails. `ChatHuggingFace` calls `chat_completion()` which is the correct path.
 
-### Why FAISS over ChromaDB?
-FAISS is fully local, zero-dependency, and fast for portfolio-scale data. ChromaDB adds an optional server layer that is overkill here.
-
-### Why `all-MiniLM-L6-v2`?
-Fast (runs on CPU), small (80 MB), high-quality for semantic search. No API key required. Normalised embeddings give consistent cosine similarity scores.
+### Why LCEL and Prompt Templates in Generation?
+Instead of constructing message lists manually inside code, we use LangChain Expression Language (LCEL) chains (e.g. `RAG_PROMPT | model | StrOutputParser()`). This separates prompt declarations cleanly from control-flow code and enables clean stream/batch handling if needed in the future.
 
 ### System Prompt Design
 The prompt enforces three hard constraints:
 1. **Identity** — Ayush's digital twin, first-person.
 2. **Context-only** — answers drawn exclusively from retrieved chunks.
-3. **Fallback** — explicit instruction to admit when information is missing.
+3. **Fallback** — explicit instruction to admit when information is missing: *"I haven't added that detail to my portfolio documents yet, but you can reach out to the real Ayush directly!"*
 
 ---
 
@@ -100,27 +105,24 @@ pip install -r requirements.txt
 ```
 
 ### Step 2 — Add your portfolio data
-Place your portfolio Markdown files inside the `data/` directory:
-```bash
-data/
-├── about.md        # Bio, background
-├── projects.md     # Work & side projects
-├── skills.md       # Technical skills
-└── experience.md   # Work history
-```
+Place your portfolio Markdown files inside the `data/` directory.
 
 ### Step 3 — Build the vectorstore
 ```bash
 python ingest.py
 ```
-This creates the `vectorstore/` directory with the FAISS index.
+This connects to the Hugging Face Inference API, embeds the document chunks, and saves the FAISS index to `vectorstore/`.
 
-### Step 4 — Start the API server
+### Step 4 — Run the Streamlit Dashboard (Frontend Test)
+```bash
+streamlit run dashboard.py
+```
+
+### Step 5 — Run the FastAPI Server (Backend Production API)
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-
-### Step 5 — Query the chatbot
+Query the API directly:
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
@@ -138,8 +140,9 @@ HF_ACCESS_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxx
 ---
 
 ## 8. Next Steps
-- [ ] Add portfolio Markdown files to `data/`
-- [ ] Run `python ingest.py` to build the vectorstore
-- [ ] Test end-to-end via `POST /chat`
-- [ ] Add a frontend chat UI (React or plain HTML)
+- [x] Add portfolio Markdown files to `data/`
+- [x] Run `python ingest.py` to build the vectorstore
+- [x] Test end-to-end via `POST /chat`
+- [x] Add a frontend chat UI (Streamlit)
 - [ ] Deploy to Hugging Face Spaces / Railway / Render
+- [ ] Connect custom React page to FastAPI backend

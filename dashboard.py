@@ -10,7 +10,7 @@ hf_token = os.getenv("HF_ACCESS_TOKEN")
 
 # Set page configuration with premium design aesthetics in mind
 st.set_page_config(
-    page_title="Ayush Kumar - RAG Twin Dashboard",
+    page_title="RAG based AI Twin",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -90,7 +90,7 @@ with st.sidebar:
     st.markdown("- **Vector Database:** `FAISS` (Local persistence)")
 
 # Header section
-st.markdown("<div class='main-title'>Ayush Kumar's Digital Twin</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>Ayush's Twin</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>A Streamlit dashboard to test and validate the RAG retrieval and generation pipeline.</div>", unsafe_allow_html=True)
 
 # Main UI Tabs
