@@ -26,7 +26,7 @@ VECTORSTORE_DIR = os.path.join(os.path.dirname(__file__), "vectorstore")
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 # Default number of chunks returned per query
-DEFAULT_TOP_K = 4
+DEFAULT_TOP_K = 8
 
 
 # ---------------------------------------------------------------------------
@@ -90,8 +90,11 @@ def retrieve_context(query: str, k: int = DEFAULT_TOP_K) -> str:
     """
     store = _load_vectorstore()
 
-    # similarity_search returns a list of Document objects ranked by cosine sim
-    results = store.similarity_search(query, k=k)
+    # MMR (Maximal Marginal Relevance) balances relevance with diversity.
+    # This prevents all retrieved chunks from coming from the same file,
+    # ensuring the context covers multiple sections of the knowledge base.
+    # fetch_k=20 considers a wider candidate pool before applying diversity filtering.
+    results = store.max_marginal_relevance_search(query, k=k, fetch_k=20)
 
     if not results:
         return ""
