@@ -20,8 +20,9 @@ langchain-huggingface
 huggingface-hub
 transformers
 
-# --- Embedding Model (local, no API key needed) ---
-sentence-transformers
+# --- Embedding Model (Hugging Face Serverless Inference API, requires HF_ACCESS_TOKEN) ---
+# We use HuggingFaceEndpointEmbeddings via langchain-huggingface.
+langchain-text-splitters
 
 # --- Vector Database (FAISS — fast, offline, no server required) ---
 faiss-cpu

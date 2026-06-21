@@ -7,9 +7,9 @@ This file documents the current state, architecture decisions, and next steps of
 ## 1. Project Overview
 A production-grade, portfolio RAG chatbot that acts as **Ayush Kumar's digital twin**.
 
-- **Retrieval**: Hosted dense embeddings via `sentence-transformers/all-MiniLM-L6-v2` via Hugging Face Inference API + FAISS vectorstore.
+- **Retrieval**: Hosted dense embeddings via `sentence-transformers/all-MiniLM-L6-v2` via Hugging Face Inference API + FAISS vectorstore (similarity search, `top_k=10`).
 - **Generation**: `Qwen/Qwen2.5-7B-Instruct` via Hugging Face Serverless API.
-- **Framework**: LangChain (LCEL) + FastAPI + Streamlit.
+- **Framework**: LangChain (LCEL) + FastAPI + Streamlit with multi-turn conversational memory.
 
 ---
 
@@ -26,11 +26,11 @@ RAG-based-twin/
 ├── antigravity.md      # This file — project state tracker
 ├── requirements.txt    # All Python dependencies
 │
-├── ingest.py           # Step 1 — Build the vectorstore from data/ via HF Endpoint API
-├── retriever.py        # Step 2 — Load vectorstore & retrieve context chunks via HF Endpoint API
-├── llm_engine.py       # Step 3 — Prompt Qwen via LCEL chains and return grounded answers
+├── ingest.py           # Step 1 — Build vectorstore (chunk size 600, overlap 100) via HF Endpoint API
+├── retriever.py        # Step 2 — Load vectorstore & retrieve context chunks via similarity search (k=10)
+├── llm_engine.py       # Step 3 — Prompt Qwen via LCEL chains with multi-turn memory placeholder
 ├── main.py             # Step 4 — FastAPI app (POST /chat, GET /health)
-├── dashboard.py        # Step 5 — Streamlit interactive testing UI
+├── dashboard.py        # Step 5 — Streamlit conversational chatbot and settings panel
 ├── rag.py              # Legacy smoke-test (single-query script, kept for reference)
 │
 ├── data/               # Place your portfolio .md files here (source of truth)
@@ -51,11 +51,11 @@ User Query (HTTP POST /chat OR Streamlit UI)
          │         │
          │         ├── Load FAISS index from vectorstore/ (once, cached)
          │         ├── Embed query with all-MiniLM-L6-v2 via HF API
-         │         └── Return top-k chunks as context string (using MMR search)
+         │         └── Return top-k chunks as context string (using similarity search)
          │
          └──► [ llm_engine.py ]
                    │
-                   ├── Load RAG_PROMPT (ChatPromptTemplate)
+                   ├── Load RAG_PROMPT (ChatPromptTemplate with chat_history MessagesPlaceholder)
                    ├── Chain execution (RAG_PROMPT | model | StrOutputParser)
                    └── Call Qwen/Qwen2.5-7B-Instruct via HF Serverless API
                                │
@@ -68,13 +68,13 @@ User Query (HTTP POST /chat OR Streamlit UI)
 
 | File | Role | Key Components |
 |---|---|---|
-| `ingest.py` | Data pipeline — run once | `DirectoryLoader`, `RecursiveCharacterTextSplitter`, `HuggingFaceEndpointEmbeddings`, `FAISS` |
-| `retriever.py` | Search engine — loads & queries FAISS | `FAISS.load_local`, `max_marginal_relevance_search`, `HuggingFaceEndpointEmbeddings` |
-| `llm_engine.py` | LLM generation layer | `ChatHuggingFace`, `ChatPromptTemplate`, `StrOutputParser`, LCEL pipe operator (`\|`) |
+| `ingest.py` | Data pipeline — run once | `DirectoryLoader`, `RecursiveCharacterTextSplitter` (600/100), `HuggingFaceEndpointEmbeddings`, `FAISS` |
+| `retriever.py` | Search engine — loads & queries FAISS | `FAISS.load_local`, `similarity_search` (k=10), `HuggingFaceEndpointEmbeddings` |
+| `llm_engine.py` | LLM generation layer | `ChatHuggingFace`, `ChatPromptTemplate`, `MessagesPlaceholder` (chat_history), `StrOutputParser`, LCEL pipe operator (`\|`) |
 | `main.py` | FastAPI REST API | `POST /chat`, `GET /health`, Pydantic models, CORS |
-| `dashboard.py` | Streamlit Dashboard | Visual query tester, source document viewer, RAG parameter controller |
-| `.streamlit/config.toml` | Streamlit configurations | Disables `fileWatcherType` to suppress warnings on optional PyTorch/Transformers submodules |
-| `requirements.txt` | Python dependencies | `langchain`, `faiss-cpu`, `langchain-huggingface`, `fastapi`, `streamlit`, etc. |
+| `dashboard.py` | Streamlit Dashboard | Conversational chat interface, session state message history, raw chunks viewer, settings slider |
+| `.streamlit/config.toml` | Streamlit configurations | Disables `fileWatcherType` to suppress file watcher warnings/spams on optional modules |
+| `requirements.txt` | Python dependencies | `langchain`, `faiss-cpu`, `langchain-huggingface`, `langchain-text-splitters`, `fastapi`, `streamlit`, etc. |
 
 ---
 
@@ -89,11 +89,22 @@ The HF Serverless API routes modern instruction models (Qwen, Llama-3, Gemma-2) 
 ### Why LCEL and Prompt Templates in Generation?
 Instead of constructing message lists manually inside code, we use LangChain Expression Language (LCEL) chains (e.g. `RAG_PROMPT | model | StrOutputParser()`). This separates prompt declarations cleanly from control-flow code and enables clean stream/batch handling if needed in the future.
 
-### System Prompt Design
-The prompt enforces three hard constraints:
-1. **Identity** — Ayush's digital twin, first-person.
-2. **Context-only** — answers drawn exclusively from retrieved chunks.
-3. **Fallback** — explicit instruction to admit when information is missing: *"I haven't added that detail to my portfolio documents yet, but you can reach out to the real Ayush directly!"*
+### System Prompt Design (9 Rules for Human-like Grounding)
+The prompt enforces strict formatting and sequencing guidelines:
+1. **First-Person Identity**: Speaks as Ayush's digital twin ("I", "my", "me").
+2. **Strict Context Grounding**: Relies *only* on retrieved facts. Falls back to a custom missing-information message if not found.
+3. **Natural Conversational Prose**: No lists, bullet points, headers, bold text, or structured formatting.
+4. **Time & Sequence Constraints**: Always orders roles with active/ongoing ones first (ending with "Present"), then completed roles in reverse-chronological order.
+5. **Present-Tense Consistency**: Speaks about active roles in the present tense (e.g., "I am currently a Research Intern at IIT Roorkee...") to avoid framing current roles in the past.
+
+### Why Similarity Search over MMR?
+Maximal Marginal Relevance (MMR) balances relevance with diversity. However, for a portfolio search, MMR penalizes returning multiple chunks from the same file. For broad questions (e.g., "what internships have you done?"), MMR would suppress secondary chunks from `experience.md` in favor of other source documents, causing active internships to go missing. Switching to plain similarity search with `DEFAULT_TOP_K = 10` ensures all relevant experience blocks are retrieved together.
+
+### Why Multi-turn Chat History?
+To build a proper chatbot instead of a single-question dashboard, we integrated LangChain's `MessagesPlaceholder("chat_history")` in the LCEL generation chain and Streamlit's `st.session_state` to track message history. This allows the digital twin to remember context across conversation turns.
+
+### Vocabulary Bridging with Metadata Tags
+Added `Type:` tags (e.g. `Type: Research Internship (current/ongoing)`) inside the raw markdown data (such as `experience.md`) so that queries like "have you done any internships" successfully retrieve teaching, research, and industry internship records even when the body text uses varying terminology.
 
 ---
 
@@ -143,6 +154,8 @@ HF_ACCESS_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxx
 - [x] Add portfolio Markdown files to `data/`
 - [x] Run `python ingest.py` to build the vectorstore
 - [x] Test end-to-end via `POST /chat`
-- [x] Add a frontend chat UI (Streamlit)
+- [x] Implement multi-turn conversational chat UI (Streamlit)
+- [x] Transition retriever from MMR to similarity search for complete internship retrieval
+- [x] Optimize prompt formatting and tense handling (9 rules)
 - [ ] Deploy to Hugging Face Spaces / Railway / Render
 - [ ] Connect custom React page to FastAPI backend

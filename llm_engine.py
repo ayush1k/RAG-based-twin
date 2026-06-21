@@ -21,8 +21,9 @@ import os
 from dotenv import load_dotenv
 
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.messages import HumanMessage, AIMessage
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -40,12 +41,18 @@ SYSTEM_PROMPT = (
     "1. Speak strictly in the first person (\"I\", \"my\", \"me\").\n"
     "2. Rely ONLY on the facts provided in the context below. Do not invent or assume anything.\n"
     "3. If the context does not contain the answer, say exactly: \"I haven't added that detail to my portfolio documents yet, but you can reach out to the real Ayush directly!\"\n"
-    "4. Keep your tone highly technical, professional, yet conversational.\n\n"
+    "4. Write in natural, flowing, conversational sentences and paragraphs — like a real person talking, not a resume or a report.\n"
+    "5. NEVER use bullet points, numbered lists, bold text, markdown headers, or any structured formatting in your response.\n"
+    "6. Keep your tone warm, confident, and professional — like you're having a genuine conversation.\n"
+    "7. Keep responses concise but complete — aim for 2 to 4 sentences unless the question genuinely requires more.\n"
+    "8. When listing experiences, internships, or roles, ALWAYS lead with any roles marked as 'current/ongoing' or ending with 'Present' — these are happening RIGHT NOW. Then list completed roles in reverse-chronological order (most recently ended first).\n"
+    "9. For any role that is currently active (ends with 'Present'), speak about it in the present tense — 'I am currently...', 'Right now I am...', 'I am working on...' — NEVER say 'Earlier' or 'I was' for a role that is still ongoing.\n\n"
     "Context:\n{retrieved_context}"
 )
 
 RAG_PROMPT = ChatPromptTemplate.from_messages([
     ("system", SYSTEM_PROMPT),
+    MessagesPlaceholder(variable_name="chat_history"),   # injected multi-turn history
     ("human", "{query}"),
 ])
 
@@ -86,16 +93,18 @@ def _get_chat_model() -> ChatHuggingFace:
     return _chat_model
 
 
-def generate_answer(query: str, context: str) -> str:
+def generate_answer(query: str, context: str, chat_history: list | None = None) -> str:
     """
     Build a RAG prompt, call Qwen, and return the grounded answer.
 
-    The prompt structure injects retrieved context into the human turn so that
-    the model has all necessary information before seeing the user's question.
+    The prompt injects retrieved context into the system turn and maintains
+    multi-turn conversation memory via the chat_history messages placeholder.
 
     Args:
-        query:   The original user question.
-        context: Formatted string of retrieved document chunks from retriever.py.
+        query:        The current user question.
+        context:      Formatted string of retrieved document chunks from retriever.py.
+        chat_history: List of (user_message, assistant_message) tuples from previous
+                      turns. Defaults to an empty list (fresh conversation).
 
     Returns:
         The model's text response as a string.
@@ -109,12 +118,19 @@ def generate_answer(query: str, context: str) -> str:
     else:
         context_block = context
 
+    # Convert (user, assistant) history tuples into LangChain message objects
+    history_messages = []
+    for user_msg, ai_msg in (chat_history or []):
+        history_messages.append(HumanMessage(content=user_msg))
+        history_messages.append(AIMessage(content=ai_msg))
+
     # Use chain and pipe operator to invoke the model
     chain = RAG_PROMPT | model | StrOutputParser()
 
     try:
         response = chain.invoke({
             "retrieved_context": context_block,
+            "chat_history": history_messages,
             "query": query
         })
         return response.strip()

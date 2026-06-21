@@ -33,9 +33,10 @@ VECTORSTORE_DIR = os.path.join(os.path.dirname(__file__), "vectorstore")
 # Local embedding model — fast, runs fully offline, no API key needed.
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
-# Chunk settings — balance between context richness and retrieval precision.
-CHUNK_SIZE = 1000       # characters per chunk
-CHUNK_OVERLAP = 200     # overlap to preserve context across chunk boundaries
+# Chunk settings — smaller chunks keep individual entries (e.g. one internship) intact
+# and prevent unrelated experiences from merging into the same retrieval unit.
+CHUNK_SIZE = 600        # characters per chunk
+CHUNK_OVERLAP = 100     # overlap to preserve context across chunk boundaries
 
 
 def load_documents():

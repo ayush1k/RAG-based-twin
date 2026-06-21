@@ -29,8 +29,10 @@ load_dotenv()
 VECTORSTORE_DIR = os.path.join(os.path.dirname(__file__), "vectorstore")
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
-# Default number of chunks returned per query
-DEFAULT_TOP_K = 8
+# Default number of chunks returned per query — higher values improve recall
+# for broad questions (e.g. "list all internships") at the cost of slightly
+# more tokens being sent to the LLM.
+DEFAULT_TOP_K = 10
 
 
 # ---------------------------------------------------------------------------
@@ -98,11 +100,13 @@ def retrieve_context(query: str, k: int = DEFAULT_TOP_K) -> str:
     """
     store = _load_vectorstore()
 
-    # MMR (Maximal Marginal Relevance) balances relevance with diversity.
-    # This prevents all retrieved chunks from coming from the same file,
-    # ensuring the context covers multiple sections of the knowledge base.
-    # fetch_k=20 considers a wider candidate pool before applying diversity filtering.
-    results = store.max_marginal_relevance_search(query, k=k, fetch_k=20)
+    # Plain similarity search — ranks purely by semantic closeness to the query.
+    # We deliberately avoid MMR here because MMR penalises returning multiple chunks
+    # from the same source file. For broad queries like "list all my internships",
+    # MMR would suppress the second and third experience.md chunks in favour of
+    # diversity across files, causing entries to go missing. Plain similarity search
+    # lets all relevant experience chunks surface together.
+    results = store.similarity_search(query, k=k)
 
     if not results:
         return ""

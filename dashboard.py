@@ -32,17 +32,6 @@ st.markdown("""
         color: #A0A0A0;
         margin-bottom: 2rem;
     }
-    .chat-card {
-        background-color: #1E293B; /* Tailwind Slate 800 */
-        color: #F8FAFC; /* Tailwind Slate 50 (Crisp white) */
-        padding: 1.5rem;
-        border-radius: 12px;
-        border-left: 5px solid #FF4B4B;
-        margin-bottom: 1.5rem;
-        font-size: 1.1rem;
-        line-height: 1.6;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
     .context-card {
         background-color: #0F172A; /* Tailwind Slate 900 */
         color: #E2E8F0; /* Tailwind Slate 200 (Light grey) */
@@ -65,23 +54,43 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ---------------------------------------------------------------------------
+# Initialise session state for conversation history
+# messages: list of {"role": "user"|"assistant", "content": str, "context": str}
+# ---------------------------------------------------------------------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "last_context" not in st.session_state:
+    st.session_state.last_context = ""
+
+# ---------------------------------------------------------------------------
 # Sidebar configurations
+# ---------------------------------------------------------------------------
 with st.sidebar:
     st.markdown("## 🤖 RAG Engine Settings")
-    
+
     if hf_token:
         st.success("HF Token Loaded successfully!")
     else:
         st.error("HF_ACCESS_TOKEN not found in environment/.env")
-        
+
     st.markdown("---")
-    
+
     # RAG Tuning Parameters
-    top_k = st.slider("Top K Document Chunks", min_value=1, max_value=10, value=4, step=1, 
+    top_k = st.slider("Top K Document Chunks", min_value=1, max_value=10, value=4, step=1,
                       help="Number of chunks to retrieve from the FAISS database.")
-                      
-    show_raw_chunks = st.checkbox("Show Raw Context Chunks", value=True,
-                                  help="Display the exact text blocks retrieved from the Markdown files.")
+
+    show_raw_chunks = st.checkbox("Show Raw Context Chunks", value=False,
+                                  help="Display the retrieved context blocks for the last question.")
+
+    st.markdown("---")
+
+    # Clear conversation button
+    if st.button("🗑️ Clear Conversation", use_container_width=True):
+        st.session_state.messages = []
+        st.session_state.last_context = ""
+        st.rerun()
 
     st.markdown("---")
     st.markdown("### ⚙️ System Specifications")
@@ -89,67 +98,91 @@ with st.sidebar:
     st.markdown("- **Generative LLM (API):** `Qwen/Qwen2.5-7B-Instruct`")
     st.markdown("- **Vector Database:** `FAISS` (Local persistence)")
 
-# Header section
+# ---------------------------------------------------------------------------
+# Header
+# ---------------------------------------------------------------------------
 st.markdown("<div class='main-title'>Ayush's Twin</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>A Streamlit dashboard to test and validate the RAG retrieval and generation pipeline.</div>", unsafe_allow_html=True)
 
+# ---------------------------------------------------------------------------
 # Main UI Tabs
-tab1, tab2 = st.tabs(["💬 Ask the Twin", "📚 Knowledge Source Documents"])
+# ---------------------------------------------------------------------------
+tab1, tab2 = st.tabs(["💬 Chat with the Twin", "📚 Knowledge Source Documents"])
 
 with tab1:
-    st.info("💡 **Try asking:** *What projects has Ayush worked on?*, *What is Ayush's background?*, or *What technologies does he prefer?*")
-    
-    query = st.text_input("Enter your query for the digital twin:", placeholder="e.g. What ML experience does Ayush have?", key="query_input")
-    
-    if st.button("Generate Answer", type="primary") and query:
-        try:
-            # Import retriever and llm_engine dynamically
-            from retriever import retrieve_context
-            from llm_engine import generate_answer
-            
-            with st.spinner("🔍 Querying FAISS and generating response from Hugging Face API..."):
-                # Step 1: Retrieve context
-                context = retrieve_context(query, k=top_k)
-                
-                # Step 2: Generate answer using the chain
-                answer = generate_answer(query, context)
-            
-            # Display Answer
-            st.markdown("### 🤖 Answer:")
-            st.markdown(f"<div class='chat-card'>{answer}</div>", unsafe_allow_html=True)
-            
-            # Display Context Chunks if selected
-            if show_raw_chunks:
-                st.markdown("---")
-                st.markdown("### 🔍 Retrieved Context Chunks:")
-                if not context or context.strip() == "":
-                    st.warning("No context chunks were retrieved from the FAISS index for this query.")
-                else:
-                    chunks = context.split("--- Chunk ")
-                    for chunk in chunks:
-                        if not chunk.strip():
-                            continue
-                        
-                        # Parse source and content
-                        parts = chunk.split("\n", 1)
-                        header = parts[0]
-                        content = parts[1] if len(parts) > 1 else ""
-                        
-                        source_info = "Source"
-                        if "source: " in header:
-                            source_info = header.split("source: ")[1].rstrip(")")
-                        
-                        st.markdown(f"<span class='badge'>{source_info}</span>", unsafe_allow_html=True)
-                        st.markdown(f"<div class='context-card'>{content.strip()}</div>", unsafe_allow_html=True)
-                        
-        except Exception as e:
-            st.error(f"Error executing RAG pipeline: {e}")
-            st.exception(e)
+    # Hint row (only shown when conversation is empty)
+    if not st.session_state.messages:
+        st.info("💡 **Try asking:** *What projects has Ayush worked on?*, *What is Ayush's background?*, or *What technologies does he prefer?*")
+
+    # -----------------------------------------------------------------------
+    # Render full conversation history using st.chat_message
+    # -----------------------------------------------------------------------
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"], avatar="🧑" if msg["role"] == "user" else "🤖"):
+            st.markdown(msg["content"])
+
+    # -----------------------------------------------------------------------
+    # Show raw context chunks for the LAST assistant reply (if toggled)
+    # -----------------------------------------------------------------------
+    if show_raw_chunks and st.session_state.last_context:
+        with st.expander("🔍 Retrieved Context Chunks for last question", expanded=False):
+            context = st.session_state.last_context
+            if not context.strip():
+                st.warning("No context chunks were retrieved from the FAISS index for that query.")
+            else:
+                chunks = context.split("--- Chunk ")
+                for chunk in chunks:
+                    if not chunk.strip():
+                        continue
+                    parts = chunk.split("\n", 1)
+                    header = parts[0]
+                    content = parts[1] if len(parts) > 1 else ""
+                    source_info = header.split("source: ")[1].rstrip(")") if "source: " in header else "Source"
+                    st.markdown(f"<span class='badge'>{source_info}</span>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='context-card'>{content.strip()}</div>", unsafe_allow_html=True)
+
+    # -----------------------------------------------------------------------
+    # Chat input — persists at the bottom of the page
+    # -----------------------------------------------------------------------
+    if prompt := st.chat_input("Ask anything about Ayush..."):
+        # Import here to avoid circular issues on cold start
+        from retriever import retrieve_context
+        from llm_engine import generate_answer
+
+        # Append user message immediately so it appears in the UI
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user", avatar="🧑"):
+            st.markdown(prompt)
+
+        # Build chat history from previous turns (exclude the just-added user msg)
+        history = [
+            (st.session_state.messages[i]["content"], st.session_state.messages[i + 1]["content"])
+            for i in range(0, len(st.session_state.messages) - 2, 2)
+            if st.session_state.messages[i]["role"] == "user"
+            and st.session_state.messages[i + 1]["role"] == "assistant"
+        ]
+
+        with st.chat_message("assistant", avatar="🤖"):
+            with st.spinner("🔍 Searching knowledge base and generating answer..."):
+                # Step 1: Retrieve context for the current query
+                context = retrieve_context(prompt, k=top_k)
+                st.session_state.last_context = context
+
+                # Step 2: Generate grounded answer with full history
+                answer = generate_answer(prompt, context, chat_history=history)
+
+            st.markdown(answer)
+
+        # Persist the assistant reply to session history
+        st.session_state.messages.append({"role": "assistant", "content": answer})
+
+        # Rerun to cleanly re-render the context expander at the correct position
+        st.rerun()
 
 with tab2:
     st.markdown("### 📖 Managed Knowledge Base")
     st.write("These are the Markdown files located inside the `/data` directory that build the FAISS index:")
-    
+
     data_dir = os.path.join(os.path.dirname(__file__), "data")
     if os.path.isdir(data_dir):
         files = [f for f in os.listdir(data_dir) if f.endswith(".md")]

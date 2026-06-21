@@ -7,11 +7,11 @@ The architecture is built using **FastAPI**, **LangChain**, **FAISS**, **Streaml
 ---
 
 ## 🚀 Key Features
-* **Hosted Embeddings**: Leverages `sentence-transformers/all-MiniLM-L6-v2` through the Hugging Face Inference API (no heavy local model downloads required).
-* **MMR Retrieval**: Uses Maximal Marginal Relevance (MMR) inside FAISS to balance relevant context retrieval with topic diversity.
-* **Strict Grounding**: The LLM persona is strictly instructed to answer in the first person using **only** the retrieved context, falling back to a custom message instead of hallucinating.
-* **Streamlit Testing Dashboard**: A sleek, interactive UI to ask questions, tweak RAG retrieval metrics (`top_k`), view raw context chunks, and explore the knowledge source files.
-* **FastAPI Server**: Modular REST API with structured Pydantic requests/responses and `/health` checks.
+* **Hosted Embeddings**: Leverages `sentence-transformers/all-MiniLM-L6-v2` through the Hugging Face Serverless Inference API (fast, lightweight, no heavy local model weight downloads).
+* **Semantic Similarity Search**: Optimized retrieval with `top_k=10` using FAISS similarity search. We deliberately transitioned from MMR to plain similarity search to ensure multiple relevant experience entries from the same file aren't suppressed.
+* **Strict First-Person Grounding**: The LLM acts strictly as Ayush's digital twin clone, answering in natural, flowing conversational sentences (no lists/markdown headers) strictly from the retrieved context. If information is missing, it returns a friendly fallback message.
+* **Multi-Turn Conversational Chatbot**: Built with Streamlit (`st.chat_input`, `st.chat_message`, and `st.session_state`), enabling dynamic conversations that remember previous questions and answers.
+* **FastAPI Backend Server**: Exposes standard, structured Pydantic REST endpoints (`POST /chat` and `GET /health`) with built-in CORS configurations.
 
 ---
 
@@ -27,11 +27,11 @@ RAG-based-twin/
 │   └── projects.md
 ├── vectorstore/         # Persisted local FAISS index (built by ingest.py)
 │
-├── ingest.py            # Chunks Markdown files and generates/saves the FAISS vector index
-├── retriever.py         # Loads FAISS index and runs MMR context retrieval
-├── llm_engine.py        # Connects to Qwen/Qwen2.5-7B-Instruct using LCEL prompt chains
+├── ingest.py            # Chunks Markdown files (600 char size, 100 overlap) and builds FAISS index
+├── retriever.py         # Loads FAISS index and performs semantic similarity search (k=10)
+├── llm_engine.py        # Prompts Qwen/Qwen2.5-7B-Instruct with conversational memory and grounding
 ├── main.py              # FastAPI application server exposing REST endpoints
-├── dashboard.py         # Streamlit visual dashboard for testing and analytics
+├── dashboard.py         # Streamlit conversational chatbot and analytics interface
 │
 ├── requirements.txt     # Python dependencies
 ├── README.md            # Project documentation (this file)
