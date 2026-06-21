@@ -1,0 +1,146 @@
+[
+  {
+    "text": "# About Ayush Kumar",
+    "source": "about"
+  },
+  {
+    "text": "I am an ML Engineer and Data Scientist specializing in Deep Learning, Computer Vision, and NLP. I am currently pursuing my M.Tech in Artificial Intelligence and Data Science (2025–2027) at the Institute of Engineering and Technology (IET) Lucknow, where I maintain a CPI of 8.4/10. I hold a B.Tech in Computer Science from Rajkiya Engineering College (REC) Kannauj (2021–2025) with a CGPA of 7.1/10.",
+    "source": "about"
+  },
+  {
+    "text": "Based in Varanasi, Uttar Pradesh, India, my professional focus is building production-grade, end-to-end Machine Learning pipelines. Rather than just training models with `.fit()`, I design structured pipelines incorporating data ingestion, model optimization, API deployment, and containerization.",
+    "source": "about"
+  },
+  {
+    "text": "### Core Credentials\n- **GATE 2025 Qualified**\n- **Google Cloud Arcade Facilitator (Cohort 1 & Cohort 2, 2025)**\n- **Oracle Cloud Infrastructure 2025 Certified Data Science Professional**",
+    "source": "about"
+  },
+  {
+    "text": "### Technical Skills\n- **Deep Learning & Computer Vision:** CNNs (EfficientNet, ResNet), Transformers (DETR, ViT), Transfer Learning, and model fine-tuning.\n- **Natural Language Processing & GenAI:** Large Language Models (LLMs), RAG (Retrieval-Augmented Generation), LangChain, and multi-agent systems via LangGraph.\n- **Ensemble & Tabular ML:** Random Forest, Gradient Boosting, XGBoost, AdaBoost, and SVMs.\n- **MLOps & Backend Engineering:** FastAPI, Flask, Docker, Node.js, SQL, and Vector Databases.\n- **Model Optimization:** K-Fold Cross Validation, Optuna, and Hyperparameter tuning.",
+    "source": "about"
+  },
+  {
+    "text": "### Certifications & Coursework\n- **Prompt Design in Vertex AI** (Google Cloud)\n- **Introduction to Generative AI** (Google Cloud)\n- **Summer Analytics 2025** (IIT Guwahati)\n- **Database Management System Part-2**\n- **High Impact Presentations**\n- **Ode To Code**\n- **LinkedIn Python Assessment** (Certified Expert)",
+    "source": "about"
+  },
+  {
+    "text": "### Academic Journey\n- **M.Tech in AI & Data Science** (2025–2027) | IET Lucknow\n- **B.Tech in Computer Science** (2021–2025) | REC Kannauj\n- **High School Education (PCM + CS)** (2006–2020) | St. Xavier's High School, India",
+    "source": "about"
+  },
+  {
+    "text": "### Leadership & Activities\n- **Training & Placement (T&P) Coordinator (REC Kannauj, 2023–25):** Managed training and placement website, social media presence, and coordinated 5+ campus placement drives for over 200+ candidates, achieving a 15% increase in total placement offers.",
+    "source": "about"
+  },
+  {
+    "text": "### Professional Profiles & Contact\n- **Email:** ayushkumar47834@gmail.com\n- **Phone:** +91 8318530390\n- **LinkedIn:** [linkedin.com/in/ayushhhhhh](https://www.linkedin.com/in/ayushhhhhh/)\n- **GitHub:** [github.com/ayush1k](https://github.com/ayush1k)\n- **Kaggle:** [kaggle.com/ayush1k](https://www.kaggle.com/ayush1k)\n- **Instagram:** [instagram.com/http_ayush](https://www.instagram.com/http_ayush/)",
+    "source": "about"
+  },
+  {
+    "text": "# Experience",
+    "source": "experience"
+  },
+  {
+    "text": "## Research Intern - Deep Learning — IIT Roorkee (Mar 2026 – Present)\n* **Research Focus:** Conducting ongoing deep learning research focused on advanced computer vision architectures.\n* **Responsibilities:** Exploring novel techniques for feature extraction and state-of-the-art model optimization.",
+    "source": "experience"
+  },
+  {
+    "text": "## Teaching Assistant — IET Lucknow (Jan 2026 – Present)\n* **Course Coverage:** Conducted laboratory sessions and led practicals for **ICS 453** (Object-Oriented Programming using Python) and **ICS 452** (Object-Oriented Programming using Java) for 80+ students.\n* **Responsibilities:** Mentored students on software design patterns, inheritance, polymorphism, multithreading, exception handling, and code compliance in both languages. Graded programming assignments and gave custom debugging feedback.",
+    "source": "experience"
+  },
+  {
+    "text": "## Teaching Assistant — IET Lucknow (Aug 2025 – Dec 2025)\n* **Course Coverage:** Mentored and supervised students during their **ICS 354** (Mini Project) course.\n* **Responsibilities:** Guided undergraduate groups across project lifecycles in Web/Software, Mobile, and Machine Learning domains. Consulted on database design, framework selections, and clean coding conventions.",
+    "source": "experience"
+  },
+  {
+    "text": "## Python Intern — Infosys Springboard (Sep 2025 – Nov 2025)\n* **NLP Pipeline Engineering:** Engineered parallelized NLP pipelines for text classification, sentiment analysis, and anomaly detection.\n* **Performance Achievements:** Built a multi-threaded parallel execution model using Python's `ThreadPoolExecutor`, reducing average text inference time by 60% and achieving 92% sentiment classification accuracy.",
+    "source": "experience"
+  },
+  {
+    "text": "## Cybersecurity Intern — C-DAC, Noida (Jul 2024 – Sep 2024)\n* **Ethical Hacking & Penetration Testing:** Gained hands-on experience in ethical hacking and vulnerability assessment. \n* **Virtual Environment Workflow:** Conducted penetration testing using advanced cybersecurity tools inside secure virtual machines hosted by C-DAC, accessing endpoints via Remote Desktop Protocol (RDP).",
+    "source": "experience"
+  },
+  {
+    "text": "## Web Development & Designing Intern — Oasis Infobyte (Jun 2024 – Jul 2024)\n* **Frontend Engineering:** Developed and deployed responsive website layouts and interactive frontend applications.\n* **Tooling & Skills:** Utilized HTML, CSS, JavaScript, and UI design systems, strengthening core frontend styling and interactive design workflows.",
+    "source": "experience"
+  },
+  {
+    "text": "# Frequently Asked Questions",
+    "source": "faq"
+  },
+  {
+    "text": "**What is your preferred development stack?**\nMy preferred stack consists of Python, LangChain, FastAPI, PyTorch, React, Streamlit, and the Hugging Face Hub. I use React for production UI design, Streamlit for rapid machine learning prototyping, and FastAPI to build modular, clean endpoints. Additionally, I leverage developer tools like the Antigravity CLI to speed up my coding and system integration workflows.",
+    "source": "faq"
+  },
+  {
+    "text": "**How do you handle GPU/VRAM hardware constraints when training models?**\nAs an M.Tech student, local computational power is often a bottleneck. I bypass local hardware memory limits by training my deep learning models in cloud compute environments, specifically leveraging Google Colab and Kaggle. For larger generative AI applications, I combine these environments with API-based inference pipelines, allowing me to build robust applications without being constrained by local hardware limitations.",
+    "source": "faq"
+  },
+  {
+    "text": "**What makes you a strong candidate for an AI/ML or Systems Engineering internship?**\nI do not just import a model and call `.fit()`. I focus on architecting end-to-end data and machine learning pipelines, ensuring that data ingestion, preprocessing, training, and deployment are structured and modular. More importantly, I plan extensively before writing code: I spend time fully understanding the core business or research problem, mapping out the architecture, and then executing the implementation.",
+    "source": "faq"
+  },
+  {
+    "text": "**How do you approach model failures and performance optimization?**\nIn real-world machine learning, nearly 80% of models fail to make it to production. When a model's accuracy or generalizability is poor, I rely on robust validation techniques (such as K-Fold Cross-Validation) and Ensemble Learning (bagging, boosting, and stacking) to build stable predictors. I also use hyperparameter optimization frameworks like `Optuna` to systematically search for the best model parameters rather than guessing.",
+    "source": "faq"
+  },
+  {
+    "text": "**What is your communication and leadership style, based on your TA experience?**\nGuiding 80+ students as a Teaching Assistant has taught me to be an active listener. When a student brings a coding block, I first focus on understanding their logic and what they are trying to achieve, rather than immediately writing a fix. I outline the resolution path, guide them through it, and invite them to ask follow-up questions. During assessment vivas, if a student does not know the answer, I always take the opportunity to explain the correct answer to them. I believe evaluations should be learning experiences, not just grading checkpoints.",
+    "source": "faq"
+  },
+  {
+    "text": "**Are you open to opportunities right now?**\nYes, I am actively seeking AI/ML Engineer, Data Scientist, and GenAI/MLOps internship roles. I am excited to contribute to full-stack ML initiatives where I can build end-to-end pipelines.",
+    "source": "faq"
+  },
+  {
+    "text": "# Projects",
+    "source": "projects"
+  },
+  {
+    "text": "## Research Publications",
+    "source": "projects"
+  },
+  {
+    "text": "### Intelligent Task Allocation in Autonomous Underwater Vehicle Swarms Using Ant Colony Optimization and Contract Net Protocol\n* **Overview:** A research paper detailing task distribution architectures in decentralized multi-agent swarms of Autonomous Underwater Vehicles (AUVs).\n* **Methodology:** \n  - Combined **Ant Colony Optimization (ACO)** (a metaheuristic optimization technique inspired by ant behavior to find optimal paths) with the **Contract Net Protocol (CNP)** (a structured negotiation framework where agents bid, award, and execute tasks).\n  - Designed the hybrid system to dynamically allocate tasks among AUVs under communication and resource constraints, minimizing task completion time and swarm energy usage.\n* **Significance:** Highlights expertise in agent-based negotiation, distributed coordination, and heuristic path-planning algorithms.",
+    "source": "projects"
+  },
+  {
+    "text": "---",
+    "source": "projects"
+  },
+  {
+    "text": "## Machine Learning Projects",
+    "source": "projects"
+  },
+  {
+    "text": "## Financial Dashboard with AI Chatbot (Scikit-learn, Hugging Face, Flask, React)\n* **Overview:** Full-stack dashboard serving financial visualizations and predictive metrics alongside a conversational chatbot assistant.\n* **Key Implementations & Metrics:**\n  - Built a predictive pricing engine using Linear Regression, achieving an **R² score of 0.85**.\n  - Fine-tuned a **DialogGPT-medium** model, achieving a **90% relevance score** for financial chat queries.\n  - Developed the end-to-end ML pipeline with a Flask API that serves real-time predictions (with model serialization) to a React frontend.",
+    "source": "projects"
+  },
+  {
+    "text": "## AI Humanize GUI (Node.js, Docker, REST API, NLP, Render)\n* **Overview:** A full-stack text rewriting application that converts machine-generated text into natural, human-like writing.\n* **Key Implementations:**\n  - Integrated a hybrid rule-based NLP engine and semantic AI to analyze and rewrite text.\n  - Containerized the application workflow using **Docker** for local development and deployment reliability.\n  - Deployed the service to **Render** via REST API endpoints for scalable cloud access.",
+    "source": "projects"
+  },
+  {
+    "text": "## Eye Disease Classification (TensorFlow, EfficientNet, Scikit-learn)\n* **Overview:** Deep learning classification system for identifying optical pathologies from retinal fundus images.\n* **Key Implementations & Metrics:**\n  - Fine-tuned **EfficientNetB3** with pre-trained ImageNet weights, achieving a **94% accuracy** on a 4-class eye disease dataset.\n  - Applied data augmentation techniques that improved the minority class F1-score by **12%**.\n  - Generated detailed evaluation metrics including confusion matrices and ROC curves.",
+    "source": "projects"
+  },
+  {
+    "text": "## Leaf Detection using Transformers (PyTorch, Hugging Face, DETR, ResNet-50)\n* **Overview:** Vision Transformer-based object detection system for identifying botanical leaves.\n* **Key Implementations & Metrics:**\n  - Fine-tuned Facebook's DEtection Transformer (**DETR**) with a **ResNet-50** backbone, achieving an **89% mAP** (mean Average Precision).\n  - Optimized the training loop using **AdamW** optimizer with a learning rate of `1e-5`.\n  - Integrated a custom collate function to handle variable-sized image batching using Hugging Face Transformers.",
+    "source": "projects"
+  },
+  {
+    "text": "## Comparative Study of ML Algorithms (Scikit-learn, NumPy, Pandas)\n* **Overview:** A systematic benchmark and evaluation of classical machine learning algorithms across multiple datasets.\n* **Key Implementations & Metrics:**\n  - Analyzed **10+ supervised and unsupervised algorithms** (including Linear/Logistic Regression, Decision Trees, SVM, KNN, K-Means, DBSCAN, and PCA) across 5 standard datasets.\n  - Performed hyperparameter tuning using Grid Search and K-Fold Cross-Validation, resulting in **8% to 15% performance improvements**.",
+    "source": "projects"
+  },
+  {
+    "text": "## Multi-Modal Agentic OCR & Document Intelligence Hub (React, Flask, Hugging Face)\n* **Overview:** A document intelligence dashboard that combines a Flask backend, a **Florence-2** powered vision-language inference engine, and a React/Tailwind frontend.\n* **Key Implementations:**\n  - Uploads document images in-memory and processes them through the inference layer.\n  - Returns extracted text and bounding boxes `[x1, y1, x2, y2]`.\n  - Dynamically draws bounding overlays on a canvas layer matching the aspect ratio of the image.",
+    "source": "projects"
+  },
+  {
+    "text": "## MedGemma-XRay (Jupyter Notebook, Python)\n* **Overview:** Automated clinical reporting tool designed for chest X-ray report drafting.\n* **Key Implementations:**\n  - Leverages Google's **MedGemma** vision-language models to analyze chest X-ray findings and automatically generate structured findings and impressions.",
+    "source": "projects"
+  },
+  {
+    "text": "## Urban Parking Dynamic Pricing System (Python, Pathway, Bokeh)\n* **Overview:** A dynamic pricing engine that adjusts parking rates based on live occupancy streams and external factors, built for Summer Analytics 2025.\n* **Key Implementations:**\n  - Built baseline occupancy models (`Price = Price_{prev} + α * Occupancy/Capacity`).\n  - Leveraged the **Pathway** streaming framework to process live occupancy feeds.\n  - Ingested external event schedules and weather data streams to dynamically compute rate multipliers.",
+    "source": "projects"
+  }
+]
