@@ -1,6 +1,18 @@
+# FastAPI Backend & Utilities
 fastapi
 uvicorn[standard]
-anthropic
-scikit-learn
 python-dotenv
 pydantic
+scikit-learn
+
+# LangChain Core and Community packages
+langchain
+langchain-community
+
+# LangChain Hugging Face Integration
+langchain-huggingface
+
+# Hugging Face SDKs & Local Inference Requirements
+huggingface-hub
+transformers
+sentence-transformers
