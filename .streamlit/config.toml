@@ -1,0 +1,4 @@
+[server]
+# Disable the file watcher to prevent Streamlit from scanning external libraries (like transformers) 
+# and logging verbose ModuleNotFoundError warnings for optional dependencies like torchvision.
+fileWatcherType = "none"

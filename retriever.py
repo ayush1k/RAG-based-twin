@@ -15,9 +15,13 @@ Flow:
 
 import os
 import sys
+from dotenv import load_dotenv
 
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
+
+# Load .env variables
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Configuration — must match the values used in ingest.py
@@ -51,11 +55,15 @@ def _load_vectorstore():
         )
 
     if _embeddings is None:
-        print(f"[Retriever] Loading embedding model: {EMBEDDING_MODEL}")
-        _embeddings = HuggingFaceEmbeddings(
-            model_name=EMBEDDING_MODEL,
-            model_kwargs={"device": "cpu"},
-            encode_kwargs={"normalize_embeddings": True},
+        token = os.getenv("HF_ACCESS_TOKEN")
+        if not token:
+            raise RuntimeError(
+                "HF_ACCESS_TOKEN is not set in the environment or .env file."
+            )
+        print(f"[Retriever] Loading hosted embedding model: {EMBEDDING_MODEL}")
+        _embeddings = HuggingFaceEndpointEmbeddings(
+            model=EMBEDDING_MODEL,
+            huggingfacehub_api_token=token,
         )
 
     if _vectorstore is None:

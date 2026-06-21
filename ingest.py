@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -89,10 +89,14 @@ def build_vectorstore(chunks):
     The index is persisted to disk so retriever.py can load it instantly.
     """
     print(f"[INFO] Loading embedding model: {EMBEDDING_MODEL}")
-    embeddings = HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={"device": "cpu"},   # switch to "cuda" if a GPU is available
-        encode_kwargs={"normalize_embeddings": True},
+    token = os.getenv("HF_ACCESS_TOKEN")
+    if not token:
+        raise RuntimeError(
+            "HF_ACCESS_TOKEN is not set in the environment or .env file."
+        )
+    embeddings = HuggingFaceEndpointEmbeddings(
+        model=EMBEDDING_MODEL,
+        huggingfacehub_api_token=token,
     )
 
     print("[INFO] Generating embeddings and building FAISS index…")

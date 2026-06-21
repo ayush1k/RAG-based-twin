@@ -29,3 +29,4 @@ faiss-cpu
 # --- Scientific / ML Utilities ---
 scikit-learn
 numpy
+streamlit

@@ -21,7 +21,8 @@ import os
 from dotenv import load_dotenv
 
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -31,18 +32,22 @@ load_dotenv()
 MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
 HF_TOKEN = os.getenv("HF_ACCESS_TOKEN")
 
-# Strict system prompt — grounds the model as Ayush's digital twin.
-# The model is explicitly forbidden from hallucinating or going off-context.
+# Chat prompt template using the user-defined portfolio system instructions
 SYSTEM_PROMPT = (
-    "You are the digital twin clone of Ayush Kumar, a software engineer and AI practitioner. "
-    "Your sole purpose is to answer questions about Ayush's background, projects, skills, "
-    "and experiences using ONLY the retrieved context provided in each message. "
-    "If the answer cannot be found in the context, say: "
-    "'I don't have that information in my knowledge base.' "
-    "Do NOT hallucinate, speculate, or use any outside knowledge. "
-    "Speak in the first person, as if you are Ayush himself. "
-    "Be concise, professional, and helpful."
+    "You are the digital twin clone of Ayush Kumar, an M.Tech student in AI & Data Science. \n"
+    "Your task is to answer questions about Ayush's background, projects, and skills.\n\n"
+    "CRITICAL INSTRUCTIONS:\n"
+    "1. Speak strictly in the first person (\"I\", \"my\", \"me\").\n"
+    "2. Rely ONLY on the facts provided in the context below. Do not invent or assume anything.\n"
+    "3. If the context does not contain the answer, say exactly: \"I haven't added that detail to my portfolio documents yet, but you can reach out to the real Ayush directly!\"\n"
+    "4. Keep your tone highly technical, professional, yet conversational.\n\n"
+    "Context:\n{retrieved_context}"
 )
+
+RAG_PROMPT = ChatPromptTemplate.from_messages([
+    ("system", SYSTEM_PROMPT),
+    ("human", "{query}"),
+])
 
 # ---------------------------------------------------------------------------
 # Module-level singleton — initialised once per process
@@ -104,23 +109,15 @@ def generate_answer(query: str, context: str) -> str:
     else:
         context_block = context
 
-    # The human message bundles context + question in a clear, structured format.
-    human_message_content = (
-        f"## Retrieved Context\n\n"
-        f"{context_block}\n\n"
-        f"---\n\n"
-        f"## Question\n\n"
-        f"{query}"
-    )
-
-    messages = [
-        SystemMessage(content=SYSTEM_PROMPT),
-        HumanMessage(content=human_message_content),
-    ]
+    # Use chain and pipe operator to invoke the model
+    chain = RAG_PROMPT | model | StrOutputParser()
 
     try:
-        response = model.invoke(messages)
-        return response.content.strip()
+        response = chain.invoke({
+            "retrieved_context": context_block,
+            "query": query
+        })
+        return response.strip()
     except Exception as e:
         error_msg = f"[LLM Engine ERROR] Failed to generate response: {e}"
         print(error_msg)
