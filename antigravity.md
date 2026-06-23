@@ -157,5 +157,5 @@ HF_ACCESS_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxx
 - [x] Implement multi-turn conversational chat UI (Streamlit)
 - [x] Transition retriever from MMR to similarity search for complete internship retrieval
 - [x] Optimize prompt formatting and tense handling (9 rules)
-- [ ] Deploy to Hugging Face Spaces / Railway / Render
-- [ ] Connect custom React page to FastAPI backend
+- [x] Deploy to Hugging Face Spaces / Railway / Render (API Backend deployed to Render: https://ayush-portfolio-backend-a4j7.onrender.com)
+- [x] Connect custom React page to FastAPI backend (Chatbot integrated into portfolio: https://ayush-portfolio-i8ua.onrender.com)

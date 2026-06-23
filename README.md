@@ -6,6 +6,12 @@ The architecture is built using **FastAPI**, **LangChain**, **FAISS**, **Streaml
 
 ---
 
+## 🌐 Live Deployments
+* **API Backend**: Deployed on Render at [https://ayush-portfolio-backend-a4j7.onrender.com](https://ayush-portfolio-backend-a4j7.onrender.com)
+* **Portfolio Website**: Deployed at [https://ayush-portfolio-i8ua.onrender.com](https://ayush-portfolio-i8ua.onrender.com) (RAG chatbot integrated directly)
+
+---
+
 ## 🚀 Key Features
 * **Hosted Embeddings**: Leverages `sentence-transformers/all-MiniLM-L6-v2` through the Hugging Face Serverless Inference API (fast, lightweight, no heavy local model weight downloads).
 * **Semantic Similarity Search**: Optimized retrieval with `top_k=10` using FAISS similarity search. We deliberately transitioned from MMR to plain similarity search to ensure multiple relevant experience entries from the same file aren't suppressed.
